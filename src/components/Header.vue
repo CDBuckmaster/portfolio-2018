@@ -1,16 +1,16 @@
 <template>
     <div id="header">
         <div id="header-content">
-            <h1 class="name-title">| Callum Buckmaster |</h1>
+            <router-link :to="{path:'/', hash:'app'}" @click.native="scrollToElem('app')"><h1 class="name-title">CALLUM BUCKMASTER</h1></router-link>
         </div>
         <div id="sticky-header" class="unstuck" v-bind:class="[isStuck ? 'stuck' : '']">
             <div id="sticky-title">
-                <h1 class="name-title">| Callum Buckmaster |</h1>
+                <router-link :to="{path:'/', hash:'app'}" @click.native="scrollToElem('app')"><h1 class="name-title">| Callum Buckmaster |</h1></router-link>
             </div>
             <nav>
                 <ul>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Works</a></li>
+                    <li><router-link :to="{path:'/', hash:'bio'}" @click.native="scrollToElem('bio')">About</router-link></li>
+                    <li><router-link :to="{path:'/', hash:'work-list'}"  @click.native="scrollToElem('work-list')">Works</router-link></li>
                 </ul>
             </nav>
             <canvas class="tab" width="300" height="300">
@@ -21,28 +21,42 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import { scrollToElem }  from '@/util'
 
 @Component
 export default class Header extends Vue {
     sFrame = -1;
     isStuck = false;
 
-    get scrollEnd(){
+    protected mounted() {
+        window.addEventListener('resize', this.resizeHandler);
+        this.addAnimationListeners();
+        this.animateArrow();
+    }
+
+    protected destroyed() {
+        window.removeEventListener('resize', this.resizeHandler);
+        this.removeAnimationListeners();
+    }
+
+    private scrollToElem = scrollToElem;
+
+    private getScrollEnd() {
 		const headerHeight = (<HTMLElement>this.$el).offsetHeight;
-        const stickyHeight = (<HTMLElement>this.$el.querySelector("#sticky-header")).offsetHeight;
-        const titleHeight = (<HTMLElement>this.$el.querySelector("#sticky-title")).offsetHeight;
+        const stickyHeight = (<HTMLElement>this.$el.querySelector('#sticky-header')).offsetHeight;
+        const titleHeight = (<HTMLElement>this.$el.querySelector('#sticky-title')).offsetHeight;
 
 		return headerHeight - stickyHeight - titleHeight;
 	}
     
-    get scrollStart(){
+    private getScrollStart() {
 		const headerHeight = (<HTMLElement>this.$el).offsetHeight;
 		const stickyHeight = (<HTMLElement>this.$el.querySelector("#sticky-header")).offsetHeight;
 
 		return headerHeight-stickyHeight;
     }
     
-    drawArrow(canvas:HTMLCanvasElement, frame:number, totalFrames:number, height?:number){
+    private drawArrow(canvas:HTMLCanvasElement, frame:number, totalFrames:number, height?:number) {
         height = typeof height !== 'undefined' ? height : 300;
 
         //The base level height for background at 0 frame
@@ -86,8 +100,7 @@ export default class Header extends Vue {
 
     }
 
-    slideElem(elem:HTMLElement, frame:number, totalFrames:number){
-        console.log(elem, frame, totalFrames);
+    private slideElem(elem:HTMLElement, frame:number, totalFrames:number) {
         const height = elem.offsetHeight;
         //const offset = 0.3 * height;
 
@@ -107,8 +120,8 @@ export default class Header extends Vue {
         }
     }
 
-    scrollAnimation(elem:HTMLElement | HTMLCanvasElement, startNum:number, endNum:number, totalFrames:number,
-     animationCallback:(...args: any[])=>void){
+    private scrollAnimation(elem:HTMLElement | HTMLCanvasElement, startNum:number, endNum:number, totalFrames:number,
+     animationCallback:(...args: any[])=>void) {
 
         const winTop = window.scrollY;
         if(winTop >= startNum && winTop <= endNum){
@@ -131,9 +144,10 @@ export default class Header extends Vue {
         return 
     }
 
-    scrollStick(){
-        const headerTop = this.scrollStart;
+    private scrollStick() {
+        const headerTop = this.getScrollStart();
         const winTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        console.log(headerTop, winTop);
         if(winTop >= headerTop){
             this.isStuck = true;
         }
@@ -142,45 +156,54 @@ export default class Header extends Vue {
         }
     }
 
-    animateArrow() {
+    private animateArrow() {
         const startNum = 0;
-        const endNum = this.scrollStart;
+        const endNum = this.getScrollStart();
         const totalFrames = 30;
         const canvas = <HTMLCanvasElement>this.$el.querySelector(".tab")!;
 
         this.scrollAnimation(canvas, startNum, endNum, totalFrames, this.drawArrow)
     }
 
-    animateSlide() {
-        const startNum = this.scrollEnd;
-        const endNum = this.scrollStart;
+    private animateSlide() {
+        const startNum = this.getScrollEnd();
+        const endNum = this.getScrollStart();
         const totalFrames = 30;
         const elem = <HTMLElement>this.$el.querySelector("#sticky-title")!;
 
         this.scrollAnimation(elem, startNum, endNum, totalFrames, this.slideElem);
     }
 
-    mounted() {
+    private addAnimationListeners() {
         window.addEventListener('scroll', this.scrollStick);
         window.addEventListener('scroll', this.animateArrow);
         window.addEventListener('scroll', this.animateSlide);
-        this.animateArrow();
     }
 
-    destroyed() {
+    private removeAnimationListeners() {
         window.removeEventListener('scroll', this.animateArrow);
         window.removeEventListener('scroll', this.scrollStick);
         window.removeEventListener('scroll', this.animateSlide);
+    }
+
+    private resizeHandler() {
+        this.removeAnimationListeners();
+        this.addAnimationListeners();
+        this.animateArrow();
     }
 }
 </script>
 
 <style scoped lang="scss">
+
 #header{
- height: 92%;
+  min-height: 92%;
   width: 100%;
   background-color: #1e1e1e;
   position: relative;
+  display: -webkit-flex;
+  display: flex;
+  align-items: center;
 }
 
 #header p{
@@ -189,7 +212,7 @@ export default class Header extends Vue {
 
 #main-content{
 	width:100%;
-	height:800px;
+	height:960px;
 }
 
 #header-content{
@@ -200,12 +223,16 @@ export default class Header extends Vue {
 
 #header-content .name-title{
 	margin: auto;
-	margin-top: 40px;
+    font-size: 6.5vw;
+}
+
+#header-content a{
+    text-decoration: none;
 }
 
 .name-title{
 	color: #FFF;
-	font-weight: normal;
+    font-weight: normal;
 }
 
 #sticky-title{
@@ -229,6 +256,7 @@ export default class Header extends Vue {
 	height: 60px;
 	width: 100%;
     background-color: #1e1e1e;
+    z-index: 1;
 }
 
 .unstuck{
@@ -249,7 +277,7 @@ export default class Header extends Vue {
 }
 
 #sticky-header nav{
-	bottom: 10px;
+	bottom: 12px;
 	width: 100%;
 	position: absolute;
 }
@@ -258,7 +286,7 @@ export default class Header extends Vue {
 	display: flex;
     align-items: stretch; /* Default */
     justify-content: space-between;
-    width: 50%;
+    width: 55%;
     margin: auto;
     padding: 0;
 }
@@ -267,6 +295,7 @@ export default class Header extends Vue {
 	display: block;
     flex: 0 1 auto; /* Default */
     list-style-type: none;
+    font-size: 1.2em;
 }
 
 .tab{
@@ -276,5 +305,11 @@ export default class Header extends Vue {
 	right: 0;
 	top: 49%;
 	margin: auto;
+}
+
+@media only screen and (max-width: 768px) {
+    #sticky-header nav{
+        display: none;
+    }
 }
 </style>

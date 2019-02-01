@@ -1,22 +1,17 @@
 <template>
   <div id="app">
     <Header></Header>
-    <bio></bio>
-    <work-list></work-list>
+    <router-view></router-view>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import Header from './components/Header.vue';
-import Bio from './components/Bio.vue';
-import WorkList from './components/WorkList.vue';
 
 @Component({
   components: {
-    Header,
-    Bio,
-    WorkList
+    Header
   },
 })
 export default class App extends Vue {}
@@ -33,12 +28,13 @@ export default class App extends Vue {}
 }
 
 html{
-height: 100%;
+  height: 100%;
 }
 
 body{
   height: 100%;
   margin: 0 0 0 0;
   background-color: #1e1e1e;
+  font-size: 100%;
 }
 </style>
